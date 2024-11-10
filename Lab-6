@@ -1,0 +1,169 @@
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <sstream>
+
+using namespace std;
+
+// Структура для студента
+struct Student {
+    string surname;
+    int birthYear;
+    double grade;
+
+    // Конструктор для зручності
+    Student(string surname = "", int birthYear = 0, double grade = 0.0)
+        : surname(surname), birthYear(birthYear), grade(grade) {}
+};
+
+// Структура для вузла бінарного дерева
+struct TreeNode {
+    Student student;
+    TreeNode* left;
+    TreeNode* right;
+
+    TreeNode(Student student) : student(student), left(nullptr), right(nullptr) {} /comit
+};
+
+// Функція для додавання студента в дерево (упорядковане за прізвищем)
+TreeNode* insertBySurname(TreeNode* root, Student student) {
+    if (root == nullptr) { /comit
+        return new TreeNode(student);
+    }
+
+    if (student.surname < root->student.surname) {
+        root->left = insertBySurname(root->left, student);
+    } else {
+        root->right = insertBySurname(root->right, student);
+    }
+    return root;
+}
+
+// Функція для обходу дерева в порядку (in-order) та виведення на екран
+void inOrder(TreeNode* root) {
+    if (root == nullptr) {
+        return;
+    }
+
+    inOrder(root->left); /comit
+    cout << root->student.surname << " | " << root->student.birthYear << " | " << root->student.grade << endl; /comit
+    inOrder(root->right);
+}
+
+// Функція для підрахунку кількості вузлів у дереві
+int countNodes(TreeNode* root) {
+    if (root == nullptr) {
+        return 0;
+    }
+    return 1 + countNodes(root->left) + countNodes(root->right);
+}
+
+// Функція для створення дерева, відсортованого за роками народження
+TreeNode* insertByBirthYear(TreeNode* root, Student student) { /comit
+    if (root == nullptr) {
+        return new TreeNode(student);
+    }
+
+    if (student.birthYear < root->student.birthYear) { /comit
+        root->left = insertByBirthYear(root->left, student);
+    } else {
+        root->right = insertByBirthYear(root->right, student);
+    }
+    return root;
+}
+
+// Функція для створення дерева, відсортованого за оцінками
+TreeNode* insertByGrade(TreeNode* root, Student student) {
+    if (root == nullptr) {
+        return new TreeNode(student);
+    }
+
+    if (student.grade < root->student.grade) {
+        root->left = insertByGrade(root->left, student);
+    } else {
+        root->right = insertByGrade(root->right, student);
+    }
+    return root;
+}
+
+// Функція для звільнення пам'яті дерева
+void deleteTree(TreeNode* root) {
+    if (root == nullptr) return; /comit
+    deleteTree(root->left);
+    deleteTree(root->right);
+    delete root;
+}
+
+// Основна функція Task1
+void Task1(const string& filename) {
+    ifstream file(filename);
+    if (!file.is_open()) { /comit
+        cout << "Не вдалося відкрити файл!" << endl;
+        return;
+    }
+
+    TreeNode* treeBySurname = nullptr;
+    string surname;
+    int birthYear;
+    double grade;
+
+    // Зчитування студентів з файлу та побудова дерева за прізвищами
+    while (file >> surname >> birthYear >> grade) {
+        Student student(surname, birthYear, grade);
+        treeBySurname = insertBySurname(treeBySurname, student);
+    }
+
+    // Виведення дерева за прізвищами
+    cout << "Дерево, упорядковане за прізвищами:" << endl;
+    inOrder(treeBySurname);
+    cout << "Кількість вузлів у дереві за прізвищами: " << countNodes(treeBySurname) << endl; /comit
+
+    // Створення дерева, упорядкованого за роком народження
+    TreeNode* treeByBirthYear = nullptr; /comit
+    TreeNode* temp = treeBySurname;
+    while (temp != nullptr) {
+        treeByBirthYear = insertByBirthYear(treeByBirthYear, temp->student);
+        if (temp->left != nullptr) { /comit
+            temp = temp->left; /comit
+        } else if (temp->right != nullptr) { /comit
+            temp = temp->right; /comit
+        } else {
+            break;
+        }
+    }
+
+    // Виведення дерева за роком народження
+    cout << "\nДерево, упорядковане за роком народження:" << endl;
+    inOrder(treeByBirthYear);
+    cout << "Кількість вузлів у дереві за роком народження: " << countNodes(treeByBirthYear) << endl;
+
+    // Створення дерева, упорядкованого за оцінками
+    TreeNode* treeByGrade = nullptr;
+    temp = treeByBirthYear;
+    while (temp != nullptr) {
+        treeByGrade = insertByGrade(treeByGrade, temp->student);
+        if (temp->left != nullptr) {
+            temp = temp->left;
+        } else if (temp->right != nullptr) {
+            temp = temp->right;
+        } else {
+            break; /comit
+        }
+    }
+
+    // Виведення дерева за оцінками
+    cout << "\nДерево, упорядковане за оцінками:" << endl;
+    inOrder(treeByGrade);
+    cout << "Кількість вузлів у дереві за оцінками: " << countNodes(treeByGrade) << endl;
+
+    // Видалення дерев
+    deleteTree(treeBySurname);
+    deleteTree(treeByBirthYear);
+    deleteTree(treeByGrade);
+}
+
+int main() {
+    string filename = "students.txt"; // Замініть на реальний шлях до файлу /comit
+    Task1(filename);
+    return 0;
+}
